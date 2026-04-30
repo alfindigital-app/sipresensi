@@ -1,7 +1,7 @@
 {
   "name": "SI Presensi",
   "short_name": "Sipresensi",
-  "start_url": "/",
+  "start_url": "/sipresensi/",
   "display": "standalone",
   "background_color": "#f4f6f8",
   "theme_color": "#2196f3",
