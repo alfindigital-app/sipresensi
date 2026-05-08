@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
   <title>SI Presensi</title>
-  
+
+  <!-- Panggil KTP Aplikasi dan Ikon -->
   <link rel="manifest" href="manifest.json">
   <link rel="icon" sizes="192x192" href="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhUBCK8u-n_wcuL2SFiLkWmfcKu7399U2Ise6yj0o09QVUaphSD9LzjXNJvhzeuEHleH6dTAjMnOQu6SqCvm7GNGDhQ-ZzwBK1vPf_HOxIcQlemPJpyAVl_DEt4u3ObQkTFGk1pJA4O6SZuz2d-AwxlRhS9hyXTZbGintC4_WzbU0_7JCdzEtl5nVkSwjA/s400/Gemini_Generated_Image_tfua15tfua15tfua%20%281%29.png">
   <link rel="apple-touch-icon" sizes="192x192" href="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhUBCK8u-n_wcuL2SFiLkWmfcKu7399U2Ise6yj0o09QVUaphSD9LzjXNJvhzeuEHleH6dTAjMnOQu6SqCvm7GNGDhQ-ZzwBK1vPf_HOxIcQlemPJpyAVl_DEt4u3ObQkTFGk1pJA4O6SZuz2d-AwxlRhS9hyXTZbGintC4_WzbU0_7JCdzEtl5nVkSwjA/s400/Gemini_Generated_Image_tfua15tfua15tfua%20%281%29.png">
@@ -29,8 +30,8 @@
     .text-banner p { margin: 0; font-size: 11px; color: #666; }
     .btn-install { background: #4CAF50; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
     .btn-close-x { background: none; border: none; font-size: 18px; color: #999; cursor: pointer; padding: 0 5px; margin-left: 2px; }
-    @media (display-mode: standalone) { #banner-install-irfin { display: none !important; } }
 
+    @media (display-mode: standalone) { #banner-install-irfin { display: none !important; } }
     /* CSS UNTUK OVERLAY KAMERA DI GITHUB */
     #kamera-eksternal {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -62,8 +63,10 @@
 </head>
 <body>
 
+  <!-- Iframe GAS Mas Irfin -->
   <iframe allow="geolocation; camera; microphone" allowfullscreen="true" src="https://script.google.com/macros/s/AKfycby-5EOgCKyRhvj_OshrJC2RjfYMDa_nVNpy24EGKx4YGXyuViv3-OSvlFsJUm_P5o5m/exec"></iframe>
 
+  <!-- Banner Instalasi -->
   <div id="banner-install-irfin">
     <div class="flex-banner">
       <img class="icon-app-img" src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhUBCK8u-n_wcuL2SFiLkWmfcKu7399U2Ise6yj0o09QVUaphSD9LzjXNJvhzeuEHleH6dTAjMnOQu6SqCvm7GNGDhQ-ZzwBK1vPf_HOxIcQlemPJpyAVl_DEt4u3ObQkTFGk1pJA4O6SZuz2d-AwxlRhS9hyXTZbGintC4_WzbU0_7JCdzEtl5nVkSwjA/s400/Gemini_Generated_Image_tfua15tfua15tfua%20%281%29.png"/>
@@ -75,7 +78,6 @@
       <button class="btn-close-x" id="btnCloseIrfin">&times;</button>
     </div>
   </div>
-
   <div id="kamera-eksternal">
     <div id="kamera-header">
       <button onclick="tutupKameraGitHub()">&#8592; Batal</button>
@@ -90,7 +92,7 @@
   </div>
 
   <script>
-    // 1. Daftarkan Service Worker
+    // 1. Daftarkan Service Worker (SYARAT MUTLAK DARI GOOGLE)
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').then(() => {
         console.log("Service Worker Terdaftar!");
@@ -106,6 +108,17 @@
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
+    });
+
+    // Mendengarkan sinyal login dari GAS
+    window.addEventListener('message', (event) => {
+      if (event.data === "login_sukses") {
+        setTimeout(() => {
+          if (deferredPrompt && !sessionStorage.getItem('sudahTutupBanner')) {
+            banner.style.display = 'block';
+          }
+        }, 3000);
+      }
     });
 
     btnInstall.addEventListener('click', async () => {
@@ -124,21 +137,19 @@
       banner.style.display = 'none';
       sessionStorage.setItem('sudahTutupBanner', 'true');
     });
-
+    
     window.addEventListener('appinstalled', () => {
       banner.style.display = 'none';
     });
-
-    // ========================================================
-    // 3. LOGIKA KOMUNIKASI DENGAN GAS & KAMERA EKSTERNAL
-    // ========================================================
+    // --- LOGIKA KAMERA EKSTERNAL (GITHUB) ---
     let streamVideo = null;
     const frameKamera = document.getElementById('kamera-eksternal');
     const videoEl = document.getElementById('video-kamera');
-    
-    // MENDENGARKAN PERINTAH DARI GAS
+    const iframeGas = document.querySelector('iframe'); // Menargetkan iframe GAS
+
+    // 1. Mendengarkan perintah dari Iframe GAS
     window.addEventListener('message', (event) => {
-      // Perintah 1: Tampilkan Banner Install
+      // (Logika login_sukses tetap biarkan di sini)
       if (event.data === "login_sukses") {
         setTimeout(() => {
           if (deferredPrompt && !sessionStorage.getItem('sudahTutupBanner')) {
@@ -147,13 +158,13 @@
         }, 3000);
       }
 
-      // Perintah 2: BUKA KAMERA!
+      // TANGKAP PERINTAH BUKA KAMERA
       if (event.data === "PERINTAH_BUKA_KAMERA") {
         bukaKameraGitHub();
       }
     });
 
-    // Fungsi Nyalakan Kamera
+    // 2. Fungsi Nyalakan Kamera
     function bukaKameraGitHub() {
       frameKamera.style.display = 'flex';
       navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
@@ -167,7 +178,7 @@
         });
     }
 
-    // Fungsi Matikan Kamera
+    // 3. Fungsi Matikan Kamera
     function tutupKameraGitHub() {
       if (streamVideo) {
         streamVideo.getTracks().forEach(track => track.stop());
@@ -176,30 +187,24 @@
       frameKamera.style.display = 'none';
     }
 
-    // Fungsi Jepret & Lempar Data
+    // 4. Fungsi Jepret & Lempar Base64 ke GAS
     function jepretGitHub() {
-      try {
-        const canvasEl = document.getElementById('canvas-kamera');
-        const ctx = canvasEl.getContext('2d');
-        const videoElemen = document.getElementById('video-kamera');
-        
-        canvasEl.width = videoElemen.videoWidth;
-        canvasEl.height = videoElemen.videoHeight;
-        
-        ctx.translate(canvasEl.width, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(videoElemen, 0, 0, canvasEl.width, canvasEl.height);
-        
-        const fotoTeks = canvasEl.toDataURL('image/jpeg', 0.8);
-        tutupKameraGitHub();
-        
-        // Lempar foto ke Iframe GAS
-        const iframeTarget = document.querySelector('iframe');
-        iframeTarget.contentWindow.postMessage({ aksi: "HASIL_FOTO_GITHUB", data: fotoTeks }, "*");
-        
-      } catch (error) {
-        alert("Gagal memproses foto di GitHub: " + error.message);
-      }
+      const canvasEl = document.getElementById('canvas-kamera');
+      const ctx = canvasEl.getContext('2d');
+      
+      canvasEl.width = videoEl.videoWidth;
+      canvasEl.height = videoEl.videoHeight;
+      
+      // Mirroring
+      ctx.translate(canvasEl.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+      
+      const fotoBase64 = canvasEl.toDataURL('image/jpeg', 0.8);
+      tutupKameraGitHub();
+      
+      // LEMPAR DATA BALIK KE DALAM IFRAME GAS
+      iframeGas.contentWindow.postMessage({ aksi: "HASIL_FOTO_GITHUB", data: fotoBase64 }, "*");
     }
   </script>
 </body>
