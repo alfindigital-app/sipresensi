@@ -186,24 +186,35 @@
       frameKamera.style.display = 'none';
     }
 
-    // 4. Fungsi Jepret & Lempar Base64 ke GAS
+    // 4. Fungsi Jepret & Lempar Base64 ke GAS (UPDATE BARU)
     function jepretGitHub() {
-      const canvasEl = document.getElementById('canvas-kamera');
-      const ctx = canvasEl.getContext('2d');
-      
-      canvasEl.width = videoEl.videoWidth;
-      canvasEl.height = videoEl.videoHeight;
-      
-      // Mirroring
-      ctx.translate(canvasEl.width, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
-      
-      const fotoBase64 = canvasEl.toDataURL('image/jpeg', 0.8);
-      tutupKameraGitHub();
-      
-      // LEMPAR DATA BALIK KE DALAM IFRAME GAS
-      iframeGas.contentWindow.postMessage({ aksi: "HASIL_FOTO_GITHUB", data: fotoBase64 }, "*");
+      try {
+        const canvasEl = document.getElementById('canvas-kamera');
+        const ctx = canvasEl.getContext('2d');
+        const videoElemen = document.getElementById('video-kamera'); // Panggil ulang biar pasti
+        
+        // Set ukuran canvas
+        canvasEl.width = videoElemen.videoWidth;
+        canvasEl.height = videoElemen.videoHeight;
+        
+        // Mirroring (Biar hasil foto tidak terbalik)
+        ctx.translate(canvasEl.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(videoElemen, 0, 0, canvasEl.width, canvasEl.height);
+        
+        // Ubah gambar jadi teks Base64
+        const fotoTeks = canvasEl.toDataURL('image/jpeg', 0.8);
+        
+        // Matikan kamera duluan
+        tutupKameraGitHub();
+        
+        // Cari iframe GAS dan lempar fotonya!
+        const iframeTarget = document.querySelector('iframe');
+        iframeTarget.contentWindow.postMessage({ aksi: "HASIL_FOTO_GITHUB", data: fotoTeks }, "*");
+        
+      } catch (error) {
+        alert("Gagal memproses foto di GitHub: " + error.message);
+      }
     }
   </script>
 </body>
