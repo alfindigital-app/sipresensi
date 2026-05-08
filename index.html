@@ -91,7 +91,7 @@
     <canvas id="canvas-kamera" style="display:none;"></canvas>
   </div>
   <script>
-    // 1. Daftarkan Service Worker (SYARAT MUTLAK DARI GOOGLE)
+    // 1. Daftarkan Service Worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').then(() => {
         console.log("Service Worker Terdaftar!");
@@ -107,17 +107,6 @@
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
-    });
-
-    // Mendengarkan sinyal login dari GAS
-    window.addEventListener('message', (event) => {
-      if (event.data === "login_sukses") {
-        setTimeout(() => {
-          if (deferredPrompt && !sessionStorage.getItem('sudahTutupBanner')) {
-            banner.style.display = 'block';
-          }
-        }, 3000);
-      }
     });
 
     btnInstall.addEventListener('click', async () => {
@@ -140,15 +129,17 @@
     window.addEventListener('appinstalled', () => {
       banner.style.display = 'none';
     });
-    // --- LOGIKA KAMERA EKSTERNAL (GITHUB) ---
+
+    // ========================================================
+    // 3. LOGIKA KOMUNIKASI DENGAN GAS & KAMERA EKSTERNAL
+    // ========================================================
     let streamVideo = null;
     const frameKamera = document.getElementById('kamera-eksternal');
     const videoEl = document.getElementById('video-kamera');
-    const iframeGas = document.querySelector('iframe'); // Menargetkan iframe GAS
-
-    // 1. Mendengarkan perintah dari Iframe GAS
+    
+    // MENDENGARKAN PERINTAH DARI GAS
     window.addEventListener('message', (event) => {
-      // (Logika login_sukses tetap biarkan di sini)
+      // Perintah 1: Tampilkan Banner Install
       if (event.data === "login_sukses") {
         setTimeout(() => {
           if (deferredPrompt && !sessionStorage.getItem('sudahTutupBanner')) {
@@ -157,13 +148,13 @@
         }, 3000);
       }
 
-      // TANGKAP PERINTAH BUKA KAMERA
+      // Perintah 2: BUKA KAMERA!
       if (event.data === "PERINTAH_BUKA_KAMERA") {
         bukaKameraGitHub();
       }
     });
 
-    // 2. Fungsi Nyalakan Kamera
+    // Fungsi Nyalakan Kamera
     function bukaKameraGitHub() {
       frameKamera.style.display = 'flex';
       navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
@@ -177,7 +168,7 @@
         });
     }
 
-    // 3. Fungsi Matikan Kamera
+    // Fungsi Matikan Kamera
     function tutupKameraGitHub() {
       if (streamVideo) {
         streamVideo.getTracks().forEach(track => track.stop());
@@ -186,29 +177,24 @@
       frameKamera.style.display = 'none';
     }
 
-    // 4. Fungsi Jepret & Lempar Base64 ke GAS (UPDATE BARU)
+    // Fungsi Jepret & Lempar Data
     function jepretGitHub() {
       try {
         const canvasEl = document.getElementById('canvas-kamera');
         const ctx = canvasEl.getContext('2d');
-        const videoElemen = document.getElementById('video-kamera'); // Panggil ulang biar pasti
+        const videoElemen = document.getElementById('video-kamera');
         
-        // Set ukuran canvas
         canvasEl.width = videoElemen.videoWidth;
         canvasEl.height = videoElemen.videoHeight;
         
-        // Mirroring (Biar hasil foto tidak terbalik)
         ctx.translate(canvasEl.width, 0);
         ctx.scale(-1, 1);
         ctx.drawImage(videoElemen, 0, 0, canvasEl.width, canvasEl.height);
         
-        // Ubah gambar jadi teks Base64
         const fotoTeks = canvasEl.toDataURL('image/jpeg', 0.8);
-        
-        // Matikan kamera duluan
         tutupKameraGitHub();
         
-        // Cari iframe GAS dan lempar fotonya!
+        // Lempar foto ke Iframe GAS
         const iframeTarget = document.querySelector('iframe');
         iframeTarget.contentWindow.postMessage({ aksi: "HASIL_FOTO_GITHUB", data: fotoTeks }, "*");
         
