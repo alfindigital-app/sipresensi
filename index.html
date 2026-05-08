@@ -32,6 +32,33 @@
     .btn-close-x { background: none; border: none; font-size: 18px; color: #999; cursor: pointer; padding: 0 5px; margin-left: 2px; }
 
     @media (display-mode: standalone) { #banner-install-irfin { display: none !important; } }
+    /* CSS UNTUK OVERLAY KAMERA DI GITHUB */
+    #kamera-eksternal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #000; z-index: 99999; flex-direction: column;
+    }
+    #kamera-header {
+      position: absolute; top: 0; width: 100%; padding: 15px; z-index: 10;
+      display: flex; justify-content: flex-start;
+    }
+    #kamera-header button {
+      background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 15px;
+      border-radius: 20px; font-weight: bold; cursor: pointer;
+    }
+    #kamera-area {
+      flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden;
+    }
+    #video-kamera {
+      width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); /* Efek Kaca */
+    }
+    #kamera-footer {
+      position: absolute; bottom: 0; width: 100%; padding-bottom: 40px;
+      display: flex; justify-content: center; z-index: 10;
+    }
+    #btn-jepret {
+      width: 70px; height: 70px; border-radius: 50%; border: 4px solid white;
+      background: rgba(255,255,255,0.3); cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -51,7 +78,18 @@
       <button class="btn-close-x" id="btnCloseIrfin">&times;</button>
     </div>
   </div>
-
+<div id="kamera-eksternal">
+    <div id="kamera-header">
+      <button onclick="tutupKameraGitHub()">&#8592; Batal</button>
+    </div>
+    <div id="kamera-area">
+      <video id="video-kamera" autoplay playsinline></video>
+    </div>
+    <div id="kamera-footer">
+      <button id="btn-jepret" onclick="jepretGitHub()"></button>
+    </div>
+    <canvas id="canvas-kamera" style="display:none;"></canvas>
+  </div>
   <script>
     // 1. Daftarkan Service Worker (SYARAT MUTLAK DARI GOOGLE)
     if ('serviceWorker' in navigator) {
@@ -102,6 +140,71 @@
     window.addEventListener('appinstalled', () => {
       banner.style.display = 'none';
     });
+    // --- LOGIKA KAMERA EKSTERNAL (GITHUB) ---
+    let streamVideo = null;
+    const frameKamera = document.getElementById('kamera-eksternal');
+    const videoEl = document.getElementById('video-kamera');
+    const iframeGas = document.querySelector('iframe'); // Menargetkan iframe GAS
+
+    // 1. Mendengarkan perintah dari Iframe GAS
+    window.addEventListener('message', (event) => {
+      // (Logika login_sukses tetap biarkan di sini)
+      if (event.data === "login_sukses") {
+        setTimeout(() => {
+          if (deferredPrompt && !sessionStorage.getItem('sudahTutupBanner')) {
+            banner.style.display = 'block';
+          }
+        }, 3000);
+      }
+
+      // TANGKAP PERINTAH BUKA KAMERA
+      if (event.data === "PERINTAH_BUKA_KAMERA") {
+        bukaKameraGitHub();
+      }
+    });
+
+    // 2. Fungsi Nyalakan Kamera
+    function bukaKameraGitHub() {
+      frameKamera.style.display = 'flex';
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
+        .then(stream => {
+          streamVideo = stream;
+          videoEl.srcObject = stream;
+        })
+        .catch(err => {
+          alert("Akses kamera ditolak oleh browser: " + err.message);
+          tutupKameraGitHub();
+        });
+    }
+
+    // 3. Fungsi Matikan Kamera
+    function tutupKameraGitHub() {
+      if (streamVideo) {
+        streamVideo.getTracks().forEach(track => track.stop());
+        streamVideo = null;
+      }
+      frameKamera.style.display = 'none';
+    }
+
+    // 4. Fungsi Jepret & Lempar Base64 ke GAS
+    function jepretGitHub() {
+      const canvasEl = document.getElementById('canvas-kamera');
+      const ctx = canvasEl.getContext('2d');
+      
+      canvasEl.width = videoEl.videoWidth;
+      canvasEl.height = videoEl.videoHeight;
+      
+      // Mirroring
+      ctx.translate(canvasEl.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+      
+      const fotoBase64 = canvasEl.toDataURL('image/jpeg', 0.8);
+      tutupKameraGitHub();
+      
+      // LEMPAR DATA BALIK KE DALAM IFRAME GAS
+      iframeGas.contentWindow.postMessage({ aksi: "HASIL_FOTO_GITHUB", data: fotoBase64 }, "*");
+    }
   </script>
 </body>
 </html>
