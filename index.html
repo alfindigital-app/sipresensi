@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
   <title>SI Presensi</title>
   
-  <!-- Panggil KTP Aplikasi dan Ikon -->
   <link rel="manifest" href="manifest.json">
   <link rel="icon" sizes="192x192" href="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhUBCK8u-n_wcuL2SFiLkWmfcKu7399U2Ise6yj0o09QVUaphSD9LzjXNJvhzeuEHleH6dTAjMnOQu6SqCvm7GNGDhQ-ZzwBK1vPf_HOxIcQlemPJpyAVl_DEt4u3ObQkTFGk1pJA4O6SZuz2d-AwxlRhS9hyXTZbGintC4_WzbU0_7JCdzEtl5nVkSwjA/s400/Gemini_Generated_Image_tfua15tfua15tfua%20%281%29.png">
   <link rel="apple-touch-icon" sizes="192x192" href="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhUBCK8u-n_wcuL2SFiLkWmfcKu7399U2Ise6yj0o09QVUaphSD9LzjXNJvhzeuEHleH6dTAjMnOQu6SqCvm7GNGDhQ-ZzwBK1vPf_HOxIcQlemPJpyAVl_DEt4u3ObQkTFGk1pJA4O6SZuz2d-AwxlRhS9hyXTZbGintC4_WzbU0_7JCdzEtl5nVkSwjA/s400/Gemini_Generated_Image_tfua15tfua15tfua%20%281%29.png">
@@ -30,8 +29,8 @@
     .text-banner p { margin: 0; font-size: 11px; color: #666; }
     .btn-install { background: #4CAF50; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
     .btn-close-x { background: none; border: none; font-size: 18px; color: #999; cursor: pointer; padding: 0 5px; margin-left: 2px; }
-
     @media (display-mode: standalone) { #banner-install-irfin { display: none !important; } }
+
     /* CSS UNTUK OVERLAY KAMERA DI GITHUB */
     #kamera-eksternal {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -63,10 +62,8 @@
 </head>
 <body>
 
-  <!-- Iframe GAS Mas Irfin -->
   <iframe allow="geolocation; camera; microphone" allowfullscreen="true" src="https://script.google.com/macros/s/AKfycby-5EOgCKyRhvj_OshrJC2RjfYMDa_nVNpy24EGKx4YGXyuViv3-OSvlFsJUm_P5o5m/exec"></iframe>
 
-  <!-- Banner Instalasi -->
   <div id="banner-install-irfin">
     <div class="flex-banner">
       <img class="icon-app-img" src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhUBCK8u-n_wcuL2SFiLkWmfcKu7399U2Ise6yj0o09QVUaphSD9LzjXNJvhzeuEHleH6dTAjMnOQu6SqCvm7GNGDhQ-ZzwBK1vPf_HOxIcQlemPJpyAVl_DEt4u3ObQkTFGk1pJA4O6SZuz2d-AwxlRhS9hyXTZbGintC4_WzbU0_7JCdzEtl5nVkSwjA/s400/Gemini_Generated_Image_tfua15tfua15tfua%20%281%29.png"/>
@@ -78,7 +75,8 @@
       <button class="btn-close-x" id="btnCloseIrfin">&times;</button>
     </div>
   </div>
-<div id="kamera-eksternal">
+
+  <div id="kamera-eksternal">
     <div id="kamera-header">
       <button onclick="tutupKameraGitHub()">&#8592; Batal</button>
     </div>
@@ -90,6 +88,7 @@
     </div>
     <canvas id="canvas-kamera" style="display:none;"></canvas>
   </div>
+
   <script>
     // 1. Daftarkan Service Worker
     if ('serviceWorker' in navigator) {
