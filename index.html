@@ -151,15 +151,18 @@
     window.addEventListener('appinstalled', () => {
       banner.style.display = 'none';
     });
-    // --- LOGIKA KAMERA EKSTERNAL (GITHUB) ---
+    // ========================================================
+    // 3. LOGIKA KOMUNIKASI DENGAN GAS & KAMERA EKSTERNAL
+    // ========================================================
     let streamVideo = null;
+    let fotoTeksSementara = ""; 
+    let jendelaGasRahasia = null; // KUNCI SAKTI: Penampung rute ke GAS
+
     const frameKamera = document.getElementById('kamera-eksternal');
     const videoEl = document.getElementById('video-kamera');
-    const iframeGas = document.querySelector('iframe'); // Menargetkan iframe GAS
-
-    // 1. Mendengarkan perintah dari Iframe GAS
+    
+    // MENDENGARKAN PERINTAH DARI GAS
     window.addEventListener('message', (event) => {
-      // (Logika login_sukses tetap biarkan di sini)
       if (event.data === "login_sukses") {
         setTimeout(() => {
           if (deferredPrompt && !sessionStorage.getItem('sudahTutupBanner')) {
@@ -168,13 +171,14 @@
         }, 3000);
       }
 
-      // TANGKAP PERINTAH BUKA KAMERA
+      // PERINTAH 2: BUKA KAMERA!
       if (event.data === "PERINTAH_BUKA_KAMERA") {
+        // SIMPAN JALAN RAHASIA MENUJU HTML GAS (BYPASS GOOGLE SANDBOX)
+        jendelaGasRahasia = event.source; 
         bukaKameraGitHub();
       }
     });
 
-    // 2. Fungsi Nyalakan Kamera
     function bukaKameraGitHub() {
       frameKamera.style.display = 'flex';
       navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
@@ -188,7 +192,6 @@
         });
     }
 
-    // 3. Fungsi Matikan Kamera
     function tutupKameraGitHub() {
       if (streamVideo) {
         streamVideo.getTracks().forEach(track => track.stop());
@@ -197,31 +200,23 @@
       frameKamera.style.display = 'none';
     }
 
-    let fotoTeksSementara = ""; // Variabel penampung foto
-
-    // 1. Fungsi Jepret (Tampilkan Konfirmasi)
     function jepretGitHub() {
       try {
         const canvasEl = document.getElementById('canvas-kamera');
         const ctx = canvasEl.getContext('2d');
-        const videoElemen = document.getElementById('video-kamera');
         
-        canvasEl.width = videoElemen.videoWidth;
-        canvasEl.height = videoElemen.videoHeight;
+        canvasEl.width = videoEl.videoWidth;
+        canvasEl.height = videoEl.videoHeight;
         
-        // Mirroring
         ctx.translate(canvasEl.width, 0);
         ctx.scale(-1, 1);
-        ctx.drawImage(videoElemen, 0, 0, canvasEl.width, canvasEl.height);
+        ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
         
-        // Simpan ke variabel sementara
         fotoTeksSementara = canvasEl.toDataURL('image/jpeg', 0.8);
         
-        // Sembunyikan Video, Tampilkan Foto Beku (Canvas)
-        videoElemen.style.display = 'none';
+        videoEl.style.display = 'none';
         canvasEl.style.display = 'block';
         
-        // Ganti Tombol Jepret jadi Tombol Konfirmasi
         document.getElementById('kamera-footer').style.display = 'none';
         document.getElementById('kamera-footer-konfirm').style.display = 'flex';
         
@@ -230,25 +225,24 @@
       }
     }
 
-    // 2. Fungsi Ulangi Foto (Kembali ke Video Live)
     function ulangFotoGitHub() {
       document.getElementById('canvas-kamera').style.display = 'none';
       document.getElementById('video-kamera').style.display = 'block';
-      
       document.getElementById('kamera-footer').style.display = 'flex';
       document.getElementById('kamera-footer-konfirm').style.display = 'none';
-      fotoTeksSementara = ""; // Kosongkan variabel
+      fotoTeksSementara = ""; 
     }
 
-    // 3. Fungsi Kirim Foto ke GAS
     function kirimFotoGitHub() {
-      tutupKameraGitHub(); // Matikan kamera
+      tutupKameraGitHub(); 
       
-      // Lempar foto ke Iframe GAS
-      const iframeTarget = document.querySelector('iframe');
-      iframeTarget.contentWindow.postMessage({ aksi: "HASIL_FOTO_GITHUB", data: fotoTeksSementara }, "*");
+      // LEMPAR FOTO LANGSUNG KE JENDELA GAS RAHASIA! (Bukan ke tag iframe lagi)
+      if (jendelaGasRahasia) {
+         jendelaGasRahasia.postMessage({ aksi: "HASIL_FOTO_GITHUB", data: fotoTeksSementara }, "*");
+      } else {
+         alert("Koneksi ke aplikasi terputus. Silakan muat ulang halaman.");
+      }
       
-      // Reset UI Kamera untuk jaga-jaga jika dibuka lagi
       ulangFotoGitHub(); 
     }
   </script>
