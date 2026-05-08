@@ -82,15 +82,25 @@
     <div id="kamera-header">
       <button onclick="tutupKameraGitHub()">&#8592; Batal</button>
     </div>
+    
     <div id="kamera-area">
       <video id="video-kamera" autoplay playsinline></video>
+      <canvas id="canvas-kamera" style="display:none; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);"></canvas>
     </div>
+    
     <div id="kamera-footer">
       <button id="btn-jepret" onclick="jepretGitHub()"></button>
     </div>
-    <canvas id="canvas-kamera" style="display:none;"></canvas>
-  </div>
 
+    <div id="kamera-footer-konfirm" style="display:none; position: absolute; bottom: 0; width: 100%; padding-bottom: 40px; justify-content: center; gap: 20px; z-index: 10;">
+      <button onclick="ulangFotoGitHub()" style="padding: 12px 25px; border-radius: 25px; border: none; font-weight: bold; background: #dc3545; color: white; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+        &#8634; Ulangi
+      </button>
+      <button onclick="kirimFotoGitHub()" style="padding: 12px 25px; border-radius: 25px; border: none; font-weight: bold; background: #198754; color: white; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+        Gunakan Foto &#10004;
+      </button>
+    </div>
+  </div>
   <script>
     // 1. Daftarkan Service Worker (SYARAT MUTLAK DARI GOOGLE)
     if ('serviceWorker' in navigator) {
@@ -187,24 +197,59 @@
       frameKamera.style.display = 'none';
     }
 
-    // 4. Fungsi Jepret & Lempar Base64 ke GAS
+    let fotoTeksSementara = ""; // Variabel penampung foto
+
+    // 1. Fungsi Jepret (Tampilkan Konfirmasi)
     function jepretGitHub() {
-      const canvasEl = document.getElementById('canvas-kamera');
-      const ctx = canvasEl.getContext('2d');
+      try {
+        const canvasEl = document.getElementById('canvas-kamera');
+        const ctx = canvasEl.getContext('2d');
+        const videoElemen = document.getElementById('video-kamera');
+        
+        canvasEl.width = videoElemen.videoWidth;
+        canvasEl.height = videoElemen.videoHeight;
+        
+        // Mirroring
+        ctx.translate(canvasEl.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(videoElemen, 0, 0, canvasEl.width, canvasEl.height);
+        
+        // Simpan ke variabel sementara
+        fotoTeksSementara = canvasEl.toDataURL('image/jpeg', 0.8);
+        
+        // Sembunyikan Video, Tampilkan Foto Beku (Canvas)
+        videoElemen.style.display = 'none';
+        canvasEl.style.display = 'block';
+        
+        // Ganti Tombol Jepret jadi Tombol Konfirmasi
+        document.getElementById('kamera-footer').style.display = 'none';
+        document.getElementById('kamera-footer-konfirm').style.display = 'flex';
+        
+      } catch (error) {
+        alert("Gagal memproses foto: " + error.message);
+      }
+    }
+
+    // 2. Fungsi Ulangi Foto (Kembali ke Video Live)
+    function ulangFotoGitHub() {
+      document.getElementById('canvas-kamera').style.display = 'none';
+      document.getElementById('video-kamera').style.display = 'block';
       
-      canvasEl.width = videoEl.videoWidth;
-      canvasEl.height = videoEl.videoHeight;
+      document.getElementById('kamera-footer').style.display = 'flex';
+      document.getElementById('kamera-footer-konfirm').style.display = 'none';
+      fotoTeksSementara = ""; // Kosongkan variabel
+    }
+
+    // 3. Fungsi Kirim Foto ke GAS
+    function kirimFotoGitHub() {
+      tutupKameraGitHub(); // Matikan kamera
       
-      // Mirroring
-      ctx.translate(canvasEl.width, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+      // Lempar foto ke Iframe GAS
+      const iframeTarget = document.querySelector('iframe');
+      iframeTarget.contentWindow.postMessage({ aksi: "HASIL_FOTO_GITHUB", data: fotoTeksSementara }, "*");
       
-      const fotoBase64 = canvasEl.toDataURL('image/jpeg', 0.8);
-      tutupKameraGitHub();
-      
-      // LEMPAR DATA BALIK KE DALAM IFRAME GAS
-      iframeGas.contentWindow.postMessage({ aksi: "HASIL_FOTO_GITHUB", data: fotoBase64 }, "*");
+      // Reset UI Kamera untuk jaga-jaga jika dibuka lagi
+      ulangFotoGitHub(); 
     }
   </script>
 </body>
